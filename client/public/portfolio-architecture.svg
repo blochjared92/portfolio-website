@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-labelledby="title desc">
+  <title id="title">Deployment architecture for this portfolio site</title>
+  <desc id="desc">React and TypeScript source is built with Vite into static assets, packaged into a Docker image, served by a small Express container, and exposed through a reverse proxy on self-hosted infrastructure.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8b93a8"/>
+    </marker>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#bg)"/>
+
+  <!-- subtle dot grid -->
+  <g opacity="0.15">
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#3b82f6"/>
+    </pattern>
+    <rect width="800" height="450" fill="url(#dots)"/>
+  </g>
+
+  <text x="40" y="46" font-family="Fira Code, ui-monospace, monospace" font-size="13" letter-spacing="2" fill="#8b93a8">DEPLOY PIPELINE</text>
+  <text x="40" y="72" font-family="Syne, ui-sans-serif, sans-serif" font-size="24" font-weight="700" fill="#e6ecf7">Source → Build → Container → Edge</text>
+
+  <!-- Stage boxes -->
+  <g font-family="Fira Code, ui-monospace, monospace" font-size="13">
+    <!-- 1 -->
+    <rect x="40" y="150" width="150" height="92" rx="12" fill="#111a2e" stroke="#3b82f6" stroke-opacity="0.45"/>
+    <text x="65" y="182" fill="#3b82f6" font-size="11" letter-spacing="1.5">01 · SOURCE</text>
+    <text x="65" y="206" fill="#e6ecf7" font-size="14" font-weight="600">React + TS</text>
+    <text x="65" y="224" fill="#8b93a8" font-size="11">Vite · Tailwind v4</text>
+
+    <!-- 2 -->
+    <rect x="230" y="150" width="150" height="92" rx="12" fill="#111a2e" stroke="#3b82f6" stroke-opacity="0.45"/>
+    <text x="255" y="182" fill="#3b82f6" font-size="11" letter-spacing="1.5">02 · BUILD</text>
+    <text x="255" y="206" fill="#e6ecf7" font-size="14" font-weight="600">vite build</text>
+    <text x="255" y="224" fill="#8b93a8" font-size="11">181KB JS+CSS gzip</text>
+
+    <!-- 3 -->
+    <rect x="420" y="150" width="150" height="92" rx="12" fill="#111a2e" stroke="#8b5cf6" stroke-opacity="0.5"/>
+    <text x="445" y="182" fill="#8b5cf6" font-size="11" letter-spacing="1.5">03 · PACKAGE</text>
+    <text x="445" y="206" fill="#e6ecf7" font-size="14" font-weight="600">Docker image</text>
+    <text x="445" y="224" fill="#8b93a8" font-size="11">Node + Express</text>
+
+    <!-- 4 -->
+    <rect x="610" y="150" width="150" height="92" rx="12" fill="#111a2e" stroke="#8b5cf6" stroke-opacity="0.5"/>
+    <text x="635" y="182" fill="#8b5cf6" font-size="11" letter-spacing="1.5">04 · SERVE</text>
+    <text x="635" y="206" fill="#e6ecf7" font-size="14" font-weight="600">Reverse proxy</text>
+    <text x="635" y="224" fill="#8b93a8" font-size="11">Self-hosted</text>
+
+    <!-- arrows -->
+    <line x1="190" y1="196" x2="226" y2="196" stroke="#8b93a8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="380" y1="196" x2="416" y2="196" stroke="#8b93a8" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="570" y1="196" x2="606" y2="196" stroke="#8b93a8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Finding callout -->
+  <g font-family="Fira Code, ui-monospace, monospace">
+    <rect x="40" y="290" width="720" height="112" rx="12" fill="#0d1526" stroke="url(#accent)" stroke-opacity="0.35"/>
+    <text x="66" y="320" fill="#8b5cf6" font-size="11" letter-spacing="1.5">FROM THE BUILD AUDIT</text>
+    <text x="66" y="346" fill="#e6ecf7" font-size="14">$ vite build  →  built index.html: 368KB (before) → 1.2KB (after)</text>
+    <text x="66" y="368" fill="#8b93a8" font-size="12">An unconditional dev-tooling plugin was inlining its runtime into every page.</text>
+    <text x="66" y="386" fill="#8b93a8" font-size="12">Gated it to dev-only in vite.config.ts — same behavior, ~367KB lighter per load.</text>
+  </g>
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-labelledby="title desc">
+  <title id="title">Reusable CI/CD pipeline template</title>
+  <desc id="desc">Terminal view of a reusable GitHub Actions pipeline template with build, test, security scan, quality gate, and deploy stages.</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#bg2)"/>
+
+  <!-- terminal window -->
+  <rect x="40" y="40" width="720" height="370" rx="14" fill="#0d1526" stroke="#3b82f6" stroke-opacity="0.3"/>
+  <!-- title bar -->
+  <rect x="40" y="40" width="720" height="36" rx="14" fill="#111a2e"/>
+  <rect x="40" y="58" width="720" height="18" fill="#111a2e"/>
+  <circle cx="64" cy="58" r="6" fill="#ef4444" opacity="0.85"/>
+  <circle cx="84" cy="58" r="6" fill="#f59e0b" opacity="0.85"/>
+  <circle cx="104" cy="58" r="6" fill="#22c55e" opacity="0.85"/>
+  <text x="400" y="63" text-anchor="middle" font-family="Fira Code, ui-monospace, monospace" font-size="12" fill="#8b93a8">.github/workflows/deploy.yml</text>
+
+  <g font-family="Fira Code, ui-monospace, monospace" font-size="14">
+    <text x="64" y="110" fill="#8b93a8">jobs:</text>
+    <text x="84" y="132" fill="#e6ecf7">build:</text>
+    <text x="104" y="152" fill="#8b93a8">run: docker build --pull -t $IMAGE .</text>
+
+    <text x="84" y="180" fill="#e6ecf7">test:</text>
+    <text x="104" y="200" fill="#8b93a8">needs: build</text>
+    <text x="104" y="218" fill="#8b93a8">run: pytest --cov --junitxml=report.xml</text>
+
+    <text x="84" y="246" fill="#3b82f6">scan:</text>
+    <text x="104" y="266" fill="#8b93a8">needs: build</text>
+    <text x="104" y="284" fill="#8b93a8">uses: aquasecurity/trivy-action</text>
+
+    <text x="84" y="312" fill="#3b82f6">quality-gate:</text>
+    <text x="104" y="332" fill="#8b93a8">needs: [test, scan]</text>
+    <text x="104" y="350" fill="#8b93a8">uses: sonarsource/sonarqube-scan-action</text>
+
+    <text x="84" y="378" fill="#8b5cf6">deploy:</text>
+    <text x="104" y="396" fill="#8b93a8">needs: quality-gate</text>
+    <text x="104" y="414" fill="#8b93a8">strategy: blue-green via ArgoCD</text>
+  </g>
+</svg>

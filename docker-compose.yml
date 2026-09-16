@@ -1,0 +1,14 @@
+# Reference compose file for self-hosting behind a reverse proxy.
+# Point your proxy (nginx/Caddy/Traefik) at 127.0.0.1:3000.
+#
+# On the host, `docker compose pull && docker compose up -d` picks up
+# whatever the deploy-prod workflow just pushed to GHCR.
+services:
+  portfolio-website:
+    image: ghcr.io/blochjared92/portfolio-website:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000

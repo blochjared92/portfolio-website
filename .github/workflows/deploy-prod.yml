@@ -1,0 +1,94 @@
+---
+# Mirrors the deploy-prod pattern from iac-ansible: SSH in, pull, restart.
+# The difference here is *what* gets pulled — a Docker image from GHCR
+# instead of an ansible-pull config, since this repo ships a container
+# rather than a host config.
+#
+# Only runs after the "ci" workflow succeeds on main, so a broken build
+# never reaches the image registry or the host.
+#
+# Requires these repo secrets (Settings > Secrets and variables > Actions):
+#   SSH_PROD_HOST               - the box this site runs on
+#   SSH_PROD_USER               - ssh user with docker compose access
+#   SSH_PROD_ACTIONS_PRIVATE_KEY - deploy key for that user
+#
+# TODO: set DEPLOY_PATH below to wherever docker-compose.yml actually
+# lives on the host, and make sure ghcr.io/blochjared92/portfolio-website
+# is reachable from there (public package, or `docker login ghcr.io` on
+# the host with a PAT that has read:packages).
+name: deploy-prod
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    branches:
+      - main
+    types:
+      - completed
+
+concurrency:
+  group: deploy-prod-main
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    name: Build + push image
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.event.workflow_run.head_sha }}
+            ghcr.io/${{ github.repository }}:latest
+
+  deploy:
+    name: Deploy prod
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    env:
+      SSH_PROD_HOST: ${{ secrets.SSH_PROD_HOST }}
+      SSH_PROD_USER: ${{ secrets.SSH_PROD_USER }}
+      # TODO: point this at the real path on the host.
+      DEPLOY_PATH: /opt/portfolio-website
+
+    steps:
+      - name: Start SSH agent
+        env:
+          SSH_PROD_ACTIONS_PRIVATE_KEY: ${{ secrets.SSH_PROD_ACTIONS_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          eval "$(ssh-agent -s)"
+          ssh-add - <<<"${SSH_PROD_ACTIONS_PRIVATE_KEY}"
+          {
+            echo "SSH_AUTH_SOCK=${SSH_AUTH_SOCK}"
+            echo "SSH_AGENT_PID=${SSH_AGENT_PID}"
+          } >> "${GITHUB_ENV}"
+
+      - name: Trust prod host
+        run: |
+          set -euo pipefail
+          ssh-keyscan -H "${SSH_PROD_HOST}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Pull + restart on host
+        run: |
+          set -euo pipefail
+          ssh "${SSH_PROD_USER}@${SSH_PROD_HOST}" "cd ${DEPLOY_PATH} && docker compose pull && docker compose up -d --force-recreate"

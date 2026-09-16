@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# TODO: uncomment and set this to your real production domain once you
+# know it — a guessed domain here would just be wrong.
+# Sitemap: https://<your-domain>/sitemap.xml

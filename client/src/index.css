@@ -1,0 +1,634 @@
+/* ============================================================
+   DESIGN PHILOSOPHY: Dark Ops Dashboard / Cyberpunk Mission Control
+   - Deep space black background (#080c14) with electric blue glow accents
+   - Glassmorphism panels with blue glow borders
+   - Syne (display) + Fira Code (mono) + Inter (body)
+   - Animated pipeline connectors, scroll-triggered reveals
+   - RESTRAINED PALETTE: white + blue (#3b82f6) + purple (#8b5cf6) only.
+     The signature accent is a blue→purple gradient. No green/amber/
+     red/cyan — accent color appears sparingly, mostly on interaction.
+   ============================================================ */
+
+/* --- Signature accent tokens (single source of truth) ---------------
+   Use these everywhere instead of hard-coded hexes so the palette stays
+   consistent. --accent-1 = blue, --accent-2 = purple. */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --breakpoint-xs: 30rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.5rem;
+  /* Header sizing — fixed terminal-bar height, always visible */
+  --nav-height: 72px;
+  /* Signature accent palette — blue → purple */
+  --accent-1: #3b82f6;        /* blue */
+  --accent-2: #8b5cf6;        /* purple */
+  --accent-1-rgb: 59, 130, 246;
+  --accent-2-rgb: 139, 92, 246;
+  --accent-gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --accent-gradient-h: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  --background: oklch(0.08 0.015 260);
+  --foreground: oklch(0.92 0.01 220);
+  --card: oklch(0.12 0.018 260);
+  --card-foreground: oklch(0.92 0.01 220);
+  --popover: oklch(0.12 0.018 260);
+  --popover-foreground: oklch(0.92 0.01 220);
+  --primary: oklch(0.62 0.22 255);
+  --primary-foreground: oklch(0.98 0.005 220);
+  --secondary: oklch(0.16 0.02 260);
+  --secondary-foreground: oklch(0.75 0.01 220);
+  --muted: oklch(0.15 0.015 260);
+  --muted-foreground: oklch(0.72 0.012 240);
+  --accent: oklch(0.18 0.025 260);
+  --accent-foreground: oklch(0.92 0.01 220);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.62 0.22 255);
+  --chart-1: oklch(0.62 0.22 255);
+  --chart-2: oklch(0.6 0.2 285);
+  --chart-3: oklch(0.62 0.22 255);
+  --chart-4: oklch(0.6 0.2 285);
+  --chart-5: oklch(0.62 0.22 270);
+  --sidebar: oklch(0.1 0.016 260);
+  --sidebar-foreground: oklch(0.92 0.01 220);
+  --sidebar-primary: oklch(0.62 0.22 255);
+  --sidebar-primary-foreground: oklch(0.98 0.005 220);
+  --sidebar-accent: oklch(0.16 0.02 260);
+  --sidebar-accent-foreground: oklch(0.92 0.01 220);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.62 0.22 255);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Continuous starfield applied to the whole page background.
+     A single, seamless dark-blue base (#0f172a) with layered radial-gradient
+     "stars" that twinkle — extended consistently across the entire document
+     so there is no seam between the header and the rest of the page. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -10% 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--background);
+    background-image:
+      radial-gradient(1.5px 1.5px at 12% 18%, rgba(255, 255, 255, 0.85), transparent),
+      radial-gradient(1.5px 1.5px at 28% 62%, rgba(191, 219, 254, 0.8), transparent),
+      radial-gradient(1px 1px at 42% 30%, rgba(255, 255, 255, 0.7), transparent),
+      radial-gradient(1.5px 1.5px at 55% 78%, rgba(147, 197, 253, 0.75), transparent),
+      radial-gradient(1px 1px at 68% 22%, rgba(255, 255, 255, 0.7), transparent),
+      radial-gradient(1.5px 1.5px at 80% 48%, rgba(191, 219, 254, 0.8), transparent),
+      radial-gradient(1px 1px at 90% 84%, rgba(255, 255, 255, 0.65), transparent),
+      radial-gradient(1px 1px at 8% 88%, rgba(147, 197, 253, 0.6), transparent),
+      radial-gradient(2px 2px at 48% 8%, rgba(255, 255, 255, 0.9), transparent),
+      radial-gradient(1px 1px at 73% 92%, rgba(255, 255, 255, 0.6), transparent);
+    background-repeat: repeat;
+    background-size: 520px 520px;
+    animation: starfield-twinkle 6s ease-in-out infinite alternate, starfield-drift 60s linear infinite;
+    transform: translateY(var(--star-parallax, 0px));
+    will-change: transform;
+  }
+  @keyframes starfield-twinkle {
+    0% { opacity: 0.55; }
+    100% { opacity: 1; }
+  }
+  @keyframes starfield-drift {
+    from { background-position: 0 0; }
+    to { background-position: 0 520px; }
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Syne', sans-serif;
+  }
+  code, pre, .font-mono {
+    font-family: 'Fira Code', monospace;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href] {
+    @apply cursor-pointer;
+  }
+
+/* Custom scrollbar */
+   ::-webkit-scrollbar {
+     width: 6px;
+   }
+   ::-webkit-scrollbar-track {
+     background: color-mix(in srgb, var(--background) 80%, transparent);
+   }
+   ::-webkit-scrollbar-thumb {
+     background: color-mix(in srgb, var(--primary) 25%, transparent);
+     border-radius: 3px;
+   }
+   ::-webkit-scrollbar-thumb:hover {
+     background: color-mix(in srgb, var(--primary) 45%, transparent);
+   }
+
+/* Text selection */
+   ::selection {
+     background: color-mix(in srgb, var(--primary) 30%, transparent);
+     color: var(--foreground);
+   }
+
+  /* Fluid images */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(1rem, 3vw, 2.5rem);
+    padding-right: clamp(1rem, 3vw, 2.5rem);
+    max-width: min(92vw, 1400px);
+  }
+  @media (min-width: 640px) {
+    .container {
+      padding-left: clamp(1.5rem, 3vw, 3rem);
+      padding-right: clamp(1.5rem, 3vw, 3rem);
+    }
+  }
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: clamp(2rem, 3vw, 4rem);
+      padding-right: clamp(2rem, 3vw, 4rem);
+    }
+  }
+
+  /* Fluid typography classes */
+  .fluid-display {
+    font-size: clamp(3rem, 7vw, 7rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .fluid-h1 {
+    font-size: clamp(2.5rem, 6vw, 5.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .fluid-h2 {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .fluid-h3 {
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    line-height: 1.2;
+  }
+  .fluid-h4 {
+    font-size: clamp(1.2rem, 2vw, 1.75rem);
+    line-height: 1.25;
+  }
+  .fluid-body-lg {
+    font-size: clamp(1.1rem, 1.3vw, 1.35rem);
+    line-height: 1.6;
+  }
+  .fluid-body {
+    font-size: clamp(1rem, 1.1vw, 1.15rem);
+    line-height: 1.65;
+  }
+  .fluid-small {
+    font-size: clamp(0.85rem, 0.9vw, 0.95rem);
+    line-height: 1.6;
+  }
+  .fluid-xs {
+    font-size: clamp(0.7rem, 0.7vw, 0.8rem);
+    line-height: 1.5;
+  }
+
+  /* Fluid spacing helpers */
+  .fluid-section {
+    padding-top: clamp(3rem, 6vw, 7rem);
+    padding-bottom: clamp(3rem, 6vw, 7rem);
+  }
+  .fluid-section-sm {
+    padding-top: clamp(2rem, 4vw, 4rem);
+    padding-bottom: clamp(2rem, 4vw, 4rem);
+  }
+  .fluid-gap {
+    gap: clamp(1rem, 2vw, 2.5rem);
+  }
+  .fluid-gap-sm {
+    gap: clamp(0.75rem, 1.5vw, 1.5rem);
+  }
+  .fluid-gap-lg {
+    gap: clamp(1.5rem, 3vw, 4rem);
+  }
+
+  /* Fluid button */
+  .fluid-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(2.6rem, 3.5vw, 3.25rem);
+    padding-block: clamp(0.7rem, 1vw, 1rem);
+    padding-inline: clamp(1.2rem, 2vw, 2.2rem);
+    font-size: clamp(0.85rem, 1vw, 1rem);
+    line-height: 1;
+    white-space: nowrap;
+    border-radius: 0.5rem;
+  }
+
+  /* Fluid card */
+  .fluid-card {
+    padding: clamp(1rem, 2vw, 2rem);
+    border-radius: 0.75rem;
+  }
+
+  /* Fluid image */
+  .fluid-img {
+    width: min(100%, 600px);
+    height: auto;
+    object-fit: cover;
+  }
+  .fluid-img-16-9 {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  /* Profile image */
+  .fluid-profile-img {
+    width: clamp(180px, 25vw, 420px);
+    height: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+
+  /* Narrow content */
+  .content-narrow {
+    max-width: min(88vw, 720px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .content-medium {
+    max-width: min(90vw, 1000px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .glass-card {
+    background: color-mix(in srgb, var(--card) 80%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .glass-card:hover {
+    border-color: color-mix(in srgb, var(--primary) 28%, transparent);
+    box-shadow: 0 0 24px color-mix(in srgb, var(--primary) 8%, transparent);
+  }
+
+  /* Glow text */
+  .text-glow-blue {
+    text-shadow: 0 0 20px rgba(96, 165, 250, 0.6), 0 0 40px rgba(59, 130, 246, 0.3);
+  }
+  .text-glow-purple {
+    text-shadow: 0 0 20px rgba(167, 139, 250, 0.6), 0 0 40px rgba(139, 92, 246, 0.3);
+  }
+
+  /* Pipeline stage badge */
+  .stage-badge {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    display: inline-block;
+  }
+
+  /* Animated border glow */
+  .border-glow {
+    position: relative;
+    transition: transform 0.2s ease;
+  }
+
+/* Pipeline connector / packet-flow SVG animation.
+     Small dash + large gap reads as a pulse traveling along the line. */
+  .pipeline-flow {
+    stroke-dasharray: 6 90;
+    animation: flow 2.4s linear infinite;
+  }
+  @keyframes flow {
+    to { stroke-dashoffset: -96; }
+  }
+
+  /* Scanline overlay */
+  .scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.025) 2px,
+      rgba(0, 0, 0, 0.025) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Skill bar */
+  /* Skill pill hover: lift + expand to reveal a proficiency bar */
+  .skill-pill {
+    transition: transform var(--dur-fast) var(--ease-out-soft),
+                border-color var(--dur-fast) var(--ease-out-soft),
+                background var(--dur-fast) var(--ease-out-soft);
+  }
+  .skill-pill:hover {
+    transform: translateY(-2px) scale(1.05);
+    border-color: rgba(var(--accent-2-rgb), 0.6) !important;
+    background: rgba(var(--accent-1-rgb), 0.16) !important;
+  }
+  /* Section transition fade */
+  .section-fade-in {
+    animation: sectionFade 0.6s ease-out forwards;
+  }
+  @keyframes sectionFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============================================================
+     ACCENT SYSTEM — blue→purple signature gradient helpers.
+     Use these instead of hard-coded colors so the palette stays
+     consistent across every component.
+     ============================================================ */
+  .accent-text {
+    background: var(--accent-gradient-h);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .accent-bg {
+    background: var(--accent-gradient);
+    color: #fff;
+  }
+  .accent-border {
+    border: 1px solid rgba(var(--accent-1-rgb), 0.4);
+  }
+  .accent-underline {
+    height: 1px;
+    width: 4rem;
+    background: var(--accent-gradient-h);
+    border-radius: 999px;
+  }
+
+  /* ============================================================
+     MOTION LANGUAGE — standardized durations, easing & distances
+     so every interaction feels like one design system (per audit).
+       fast  = 180ms  (color/opacity)
+       base  = 220ms  (lifts, shadows, transforms)
+       slow  = 280ms  (images, reveals)
+     easing = cubic-bezier(0.22, 1, 0.36, 1)  (gentle "settle")
+     ============================================================ */
+  :root {
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    --dur-fast: 180ms;
+    --dur-base: 220ms;
+    --dur-slow: 280ms;
+    --lift: -4px;   /* standard hover lift distance */
+  }
+
+  /* Interactive link — gray→white weight shift + sliding underline
+     (restrained: no color change, per audit reference). */
+  .link-anim {
+    position: relative;
+    color: var(--muted-foreground);
+    transition: color var(--dur-fast) var(--ease-out-soft);
+  }
+  .link-anim::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 1px;
+    background: var(--accent-gradient-h);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--dur-base) var(--ease-out-soft);
+  }
+  .link-anim:hover {
+    color: var(--foreground);
+  }
+  .link-anim:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Card title that shifts to the accent gradient when its card is hovered */
+  .title-hover {
+    transition: color var(--dur-fast) var(--ease-out-soft);
+  }
+  .group:hover .title-hover,
+  .spotlight:hover .title-hover {
+    background: var(--accent-gradient-h);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Standard interactive card lift */
+  .card-lift {
+    transition: transform var(--dur-base) var(--ease-out-soft),
+                box-shadow var(--dur-base) var(--ease-out-soft),
+                border-color var(--dur-base) var(--ease-out-soft);
+    will-change: transform;
+  }
+  .card-lift:hover {
+    transform: translateY(var(--lift));
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    border-color: rgba(var(--accent-1-rgb), 0.5);
+  }
+
+  /* ============================================================
+     SPOTLIGHT CARD — a radial glow follows the pointer across the
+     card (JS sets --mx / --my as percentages). Every card/box gets
+     a reaction when hovered. Pair with .card-lift for the raise.
+     ============================================================ */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+    --mx: 50%;
+    --my: 50%;
+    transition: transform var(--dur-base) var(--ease-out-soft),
+                box-shadow var(--dur-base) var(--ease-out-soft),
+                border-color var(--dur-base) var(--ease-out-soft);
+  }
+  .spotlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      220px circle at var(--mx) var(--my),
+      rgba(var(--accent-1-rgb), 0.55),
+      rgba(var(--accent-2-rgb), 0.28) 40%,
+      transparent 70%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity var(--dur-base) var(--ease-out-soft);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .spotlight::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      260px circle at var(--mx) var(--my),
+      rgba(var(--accent-1-rgb), 0.10),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity var(--dur-base) var(--ease-out-soft);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .spotlight:hover {
+    transform: translateY(var(--lift));
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4);
+  }
+  .spotlight:hover::before,
+  .spotlight:hover::after {
+    opacity: 1;
+  }
+  /* Keep card content above the glow layers */
+  .spotlight > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Magnetic / glow button — pointer-following sheen for CTAs */
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    --mx: 50%;
+    --my: 50%;
+  }
+  .btn-glow::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      120px circle at var(--mx) var(--my),
+      rgba(255, 255, 255, 0.25),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out-soft);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .btn-glow:hover::after {
+    opacity: 1;
+  }
+  .btn-glow > * {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+/* Equalizer bars for the audio "playing" state */
+.eq-bar {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  background: currentColor;
+  border-radius: 2px;
+  animation: eq 0.9s ease-in-out infinite;
+}
+@keyframes eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+/* Typing headline: long roles ("Cloud Automation Enthusiast") wrap on
+   small phones, so reserve the second line to prevent layout shift. */
+.typing-line { min-height: 1.8em; }
+@media (max-width: 430px) {
+  .typing-line { min-height: 3.5em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-bar { animation: none; transform: scaleY(0.7); }
+  .pipeline-flow { animation: none; stroke-dasharray: none; stroke-opacity: 0.18; }
+}
